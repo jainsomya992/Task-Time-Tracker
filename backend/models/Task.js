@@ -1,7 +1,11 @@
-// models/Task.js
 import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'User', // This creates the link to the 'User' model
+  },
   title: {
     type: String,
     required: true,
@@ -20,6 +24,8 @@ const taskSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+}, {
+  timestamps: true, // This adds 'createdAt' and 'updatedAt' fields automatically
 });
 
 const Task = mongoose.model("Task", taskSchema);
