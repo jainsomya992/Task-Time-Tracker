@@ -15,7 +15,11 @@ const PORT = process.env.PORT || 5050;
 
 // Middleware
 app.use(express.json()); 
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({
+    origin: "*", // for testing, or replace with your Vercel URL in production
+    credentials: true
+  }));
+  
 
 // API Routes
 app.use('/api/users', userRoutes);
