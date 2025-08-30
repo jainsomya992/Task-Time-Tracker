@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5050;
 
 
 app.use(cors({
-    origin: "https://task-time-tracker-kp7umo2cm-jainsomya992s-projects.vercel.app", // for testing, or replace with your Vercel URL in production
+    origin: "https://task-time-tracker-59qmoldsy-jainsomya992s-projects.vercel.app", // for testing, or replace with your Vercel URL in production
     credentials: true
   }));
   // Middleware
