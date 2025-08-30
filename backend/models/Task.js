@@ -1,33 +1,33 @@
 import mongoose from "mongoose";
 
-const taskSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User', // This creates the link to the 'User' model
+const TaskSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
+    title: {
+      type: String,
+      required: [true, "Please add a title"],
+    },
+    description: {
+      type: String,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "in-progress", "completed"],
+      default: "pending",
+    },
+    timeSpent: {
+      type: Number, // Storing time in seconds
+      default: 0,
+    },
   },
-  title: {
-    type: String,
-    required: true,
-  },
-  description: String,
-  status: {
-    type: String,
-    enum: ["pending", "in-progress", "completed"],
-    default: "pending",
-  },
-  timeSpent: {
-    type: Number, // in minutes
-    default: 0,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-}, {
-  timestamps: true, // This adds 'createdAt' and 'updatedAt' fields automatically
-});
+  {
+    timestamps: true,
+  }
+);
 
-const Task = mongoose.model("Task", taskSchema);
-
+const Task = mongoose.model("Task", TaskSchema);
 export default Task;

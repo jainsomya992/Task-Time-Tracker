@@ -1,0 +1,170 @@
+/* General Resets and Body Styles */
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
+    overflow: hidden; /* Prevents scrollbars from the container */
+}
+
+/* Main Container */
+.login-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Left Side - Informational Panel */
+.login-left {
+    width: 50%; /* Set to exactly 50% of the viewport width */
+    background: #FFFBEB; /* A softer, more pleasant cornsilk/cream color */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    box-sizing: border-box; /* Ensures padding is included in the width */
+}
+
+.left-content {
+    max-width: 450px;
+    animation: slideIn 1s ease-out forwards;
+}
+
+.left-content h1 {
+    font-size: 2.8rem; /* Increased font size for impact */
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+}
+
+.left-content p {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.6;
+}
+
+/* Right Side - Login Form Panel */
+.login-right {
+    width: 50%; /* Set to exactly 50% of the viewport width */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ffffff;
+    padding: 40px;
+    box-sizing: border-box;
+}
+
+/* Login Box Styling */
+.login-box {
+    width: 100%;
+    max-width: 380px; /* Increased max-width for better spacing */
+    padding: 40px; /* Increased padding */
+    border-radius: 16px; /* More rounded corners */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); /* Softer, more modern shadow */
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.login-box h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+/* Form Group Styling */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    outline: none;
+    box-sizing: border-box; /* Important for consistent sizing */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+/* Button Container and Styling */
+.btn-container {
+    display: flex;
+    justify-content: center; /* This centers the button */
+    margin-top: 25px;
+}
+
+.login-btn {
+    width: 100%; /* Button takes full width of its container */
+    padding: 14px;
+    background: #007bff; /* The blue color you wanted */
+    border: none;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.login-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .login-left, .login-right {
+        width: 100%;
+        height: auto;
+        padding: 40px 20px;
+    }
+
+    .login-left {
+        text-align: center;
+        height: 50vh; /* Give it some height on mobile */
+    }
+}
