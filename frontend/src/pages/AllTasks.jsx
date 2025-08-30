@@ -10,14 +10,15 @@ import {
   FaTrash,
   FaChevronDown,
   FaChevronUp,
-  FaEdit, // NEW: Icon for the Edit button
+  FaEdit,
 } from "react-icons/fa";
 import "./AllTasks.css";
 
 function formatTimeMs(ms) {
-  const s = Math.floor(ms / 1000) % 60;
-  const m = Math.floor(ms / (1000 * 60)) % 60;
-  const h = Math.floor(ms / (1000 * 60 * 60));
+  const totalSeconds = Math.floor(ms / 1000);
+  const s = totalSeconds % 60;
+  const m = Math.floor(totalSeconds / 60) % 60;
+  const h = Math.floor(totalSeconds / 3600);
   return `${h}h ${m}m ${s}s`;
 }
 
@@ -29,8 +30,10 @@ function AllTasks({ user, onTimerChange }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [startingTask, setStartingTask] = useState(null);
+  const [stoppingTask, setStoppingTask] = useState(null);
+  const [completingTask, setCompletingTask] = useState(null);
+  const [deletingTask, setDeletingTask] = useState(null);
 
-  // NEW: State for the Edit Task modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
 
@@ -42,10 +45,14 @@ function AllTasks({ user, onTimerChange }) {
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
+      setError("");
       const res = await fetch("http://localhost:5050/api/tasks", { headers });
       if (!res.ok) throw new Error("Failed to load tasks");
       const data = await res.json();
       setTasks(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      
+      // Reset elapsed times when tasks are refreshed
+      setElapsedTimes({});
     } catch (err) {
       setError(err.message);
     } finally {
@@ -54,39 +61,150 @@ function AllTasks({ user, onTimerChange }) {
   }, [headers]);
 
   const fetchActiveTimelogs = useCallback(async () => {
-    // ... (existing code is correct)
+    try {
+      const res = await fetch("http://localhost:5050/api/timelog/active", { headers });
+      if (!res.ok) throw new Error("Failed to load active timelogs");
+      const data = await res.json();
+      const activeMap = {};
+      const elapsedMap = {};
+      data.forEach((log) => {
+        if (log.task && log.task._id) {
+          activeMap[log.task._id] = { logId: log._id, startTime: log.startTime };
+          elapsedMap[log.task._id] = Date.now() - new Date(log.startTime).getTime();
+        }
+      });
+      setActiveTimers(activeMap);
+      setElapsedTimes(elapsedMap);
+    } catch (err) {
+      console.error("Failed to fetch active timelogs:", err);
+    }
   }, [headers]);
 
   useEffect(() => {
-    fetchTasks();
-    fetchActiveTimelogs();
-  }, [fetchTasks, fetchActiveTimelogs]);
+    if (user?.token) {
+        fetchTasks();
+        fetchActiveTimelogs();
+    }
+  }, [user, fetchTasks, fetchActiveTimelogs]);
 
   useEffect(() => {
-    // ... (existing timer effect is correct)
+    const ids = Object.keys(activeTimers);
+    if (!ids.length) return;
+    const interval = setInterval(() => {
+      setElapsedTimes(prev => {
+        const updated = { ...prev };
+        ids.forEach((id) => {
+          const log = activeTimers[id];
+          if (log) updated[id] = Date.now() - new Date(log.startTime).getTime();
+        });
+        return updated;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
   }, [activeTimers]);
 
   const toggleExpand = useCallback((id) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
-
+  
   const handleStart = useCallback(async (taskId) => {
-    // ... (existing code is correct)
-  }, [headers, onTimerChange, startingTask, tasks]);
-
+    if (startingTask) return;
+    setStartingTask(taskId);
+    try {
+      const res = await fetch(`http://localhost:5050/api/timelog/start/${taskId}`, {
+        method: "POST",
+        headers,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to start task");
+  
+      setActiveTimers((prev) => ({ ...prev, [taskId]: { logId: data._id, startTime: data.startTime } }));
+      
+      // This line ensures the visual timer starts from 0.
+      setElapsedTimes((prev) => ({ ...prev, [taskId]: 0 }));
+  
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setStartingTask(null);
+    }
+  }, [headers, startingTask]);
+  
   const handleStop = useCallback(async (taskId) => {
-    // ... (existing code is correct)
-  }, [headers, activeTimers]);
+    try {
+      const timelog = activeTimers[taskId];
+      if (!timelog) return setError("No active timer for this task");
+  
+      const res = await fetch(`http://localhost:5050/api/timelog/stop/${timelog.logId}`, {
+        method: "POST",
+        headers,
+      });
+  
+      if (!res.ok) throw new Error((await res.json()).message || "Failed to stop timer on server");
+  
+      // ✅ clear local timers immediately
+      setActiveTimers(prev => {
+        const copy = { ...prev };
+        delete copy[taskId];
+        return copy;
+      });
+  
+      setElapsedTimes(prev => {
+        const copy = { ...prev };
+        copy[taskId] = 0;
+        return copy;
+      });
+  
+      // ✅ now refresh task list from backend
+      await fetchTasks();
+  
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [headers, activeTimers, fetchTasks]);
+  
 
   const handleComplete = useCallback(async (taskId) => {
-    // ... (existing code is correct)
-  }, [headers]);
+    try {
+      setCompletingTask(taskId);
+      if (activeTimers[taskId]) await handleStop(taskId);
+
+      const res = await fetch(`http://localhost:5050/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ status: "completed" }),
+      });
+      if (!res.ok) throw new Error((await res.json()).message || "Failed to complete task");
+      
+      setTasks(prevTasks =>
+        prevTasks.map(t =>
+          t._id === taskId ? { ...t, status: "completed", updatedAt: new Date().toISOString() } : t
+        )
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCompletingTask(null);
+    }
+  }, [headers, activeTimers, handleStop]);
 
   const handleDelete = useCallback(async (taskId) => {
-    // ... (existing code is correct)
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+    try {
+      setDeletingTask(taskId);
+      const res = await fetch(`http://localhost:5050/api/tasks/${taskId}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (!res.ok) throw new Error("Failed to delete task");
+      setTasks(prev => prev.filter(t => t._id !== taskId));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingTask(null);
+    }
   }, [headers]);
 
-  // NEW: Handlers for opening, closing, and submitting the Edit Modal
   const openEditModal = (task) => {
     setTaskToEdit(task);
     setIsEditModalOpen(true);
@@ -111,22 +229,17 @@ function AllTasks({ user, onTimerChange }) {
         body: JSON.stringify({ title: updatedTitle, description: updatedDescription }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Failed to update task');
-      }
+      if (!res.ok) throw new Error((await res.json()).message || 'Failed to update task');
 
       closeEditModal();
-      await fetchTasks(); // Refresh the task list to show changes
+      await fetchTasks();
     } catch (err) {
-      // You can set an error state specific to the modal if you want
       console.error("Update error:", err);
       setError(err.message);
     }
   }, [headers, taskToEdit, fetchTasks]);
 
-
-  if (loading) return <div>Loading tasks...</div>;
+  if (loading) return <div className="loading">Loading tasks...</div>;
 
   return (
     <>
@@ -153,8 +266,8 @@ function AllTasks({ user, onTimerChange }) {
           <div className="tasks-container">
             {tasks.map((task) => {
               const isActive = !!activeTimers[task._id];
-              const currentElapsed = isActive ? elapsedTimes[task._id] || 0 : 0;
-              const totalTimeMs = (task.timeSpent || 0) * 1000 + currentElapsed;
+              const currentElapsed = elapsedTimes[task._id] || 0;
+              const totalTimeMs = (task.timeSpent || 0) * 1000 + (isActive ? currentElapsed : 0);
 
               return (
                 <div key={task._id} className="task-card">
@@ -179,12 +292,20 @@ function AllTasks({ user, onTimerChange }) {
                         {task.status !== "completed" && (
                           <div className="timer-buttons">
                             {isActive ? (
-                              <button className="btn warning" onClick={() => handleStop(task._id)}>
-                                <FaStop /> Stop
+                              <button 
+                                className="btn warning" 
+                                onClick={() => handleStop(task._id)}
+                                disabled={stoppingTask === task._id}
+                              >
+                                {stoppingTask === task._id ? "Stopping..." : <><FaStop /> Stop</>}
                               </button>
                             ) : (
-                              <button className="btn primary" onClick={() => handleStart(task._id)} disabled={!!startingTask}>
-                                <FaPlay /> Start
+                              <button 
+                                className="btn primary" 
+                                onClick={() => handleStart(task._id)} 
+                                disabled={!!startingTask}
+                              >
+                                {startingTask === task._id ? "Starting..." : <><FaPlay /> Start</>}
                               </button>
                             )}
                           </div>
@@ -196,18 +317,26 @@ function AllTasks({ user, onTimerChange }) {
                         {task.status === "completed" && (
                           <span>Completed: {new Date(task.updatedAt).toLocaleDateString()}</span>
                         )}
+                        <span>Total: {formatTimeMs(totalTimeMs)}</span>
                       </div>
 
                       <div className="actions">
-                        {/* NEW: Edit Button added here */}
                         <button className="btn" onClick={() => openEditModal(task)}>
                           <FaEdit /> Edit
                         </button>
-                        <button className="btn success" onClick={() => handleComplete(task._id)} disabled={task.status === "completed"}>
-                          <FaCheck /> Complete
+                        <button 
+                          className="btn success" 
+                          onClick={() => handleComplete(task._id)} 
+                          disabled={task.status === "completed" || completingTask === task._id}
+                        >
+                          {completingTask === task._id ? "Completing..." : <><FaCheck /> Complete</>}
                         </button>
-                        <button className="btn danger" onClick={() => handleDelete(task._id)}>
-                          <FaTrash /> Delete
+                        <button 
+                          className="btn danger" 
+                          onClick={() => handleDelete(task._id)}
+                          disabled={deletingTask === task._id}
+                        >
+                          {deletingTask === task._id ? "Deleting..." : <><FaTrash /> Delete</>}
                         </button>
                       </div>
                     </>
@@ -219,7 +348,6 @@ function AllTasks({ user, onTimerChange }) {
         )}
       </div>
 
-      {/* NEW: Edit Task Modal */}
       {isEditModalOpen && (
         <div className="modal-overlay" onClick={closeEditModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

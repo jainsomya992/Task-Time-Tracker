@@ -15,4 +15,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # env
+
 .env
+backend/.env
+frontend/.env
