@@ -46,7 +46,7 @@ function AllTasks({ user, onTimerChange }) {
     try {
       setLoading(true);
       setError("");
-      const res = await fetch("http://localhost:5050/api/tasks", { headers });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks`, { headers });
       if (!res.ok) throw new Error("Failed to load tasks");
       const data = await res.json();
       setTasks(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
@@ -62,7 +62,7 @@ function AllTasks({ user, onTimerChange }) {
 
   const fetchActiveTimelogs = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:5050/api/timelog/active", { headers });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/timelog/active`, { headers });
       if (!res.ok) throw new Error("Failed to load active timelogs");
       const data = await res.json();
       const activeMap = {};
@@ -111,7 +111,7 @@ function AllTasks({ user, onTimerChange }) {
     if (startingTask) return;
     setStartingTask(taskId);
     try {
-      const res = await fetch(`http://localhost:5050/api/timelog/start/${taskId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/timelog/start/${taskId}`, {
         method: "POST",
         headers,
       });
@@ -169,7 +169,7 @@ function AllTasks({ user, onTimerChange }) {
       setCompletingTask(taskId);
       if (activeTimers[taskId]) await handleStop(taskId);
 
-      const res = await fetch(`http://localhost:5050/api/tasks/${taskId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`, {
         method: "PUT",
         headers,
         body: JSON.stringify({ status: "completed" }),
@@ -192,7 +192,7 @@ function AllTasks({ user, onTimerChange }) {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
     try {
       setDeletingTask(taskId);
-      const res = await fetch(`http://localhost:5050/api/tasks/${taskId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`, {
         method: "DELETE",
         headers,
       });
@@ -223,7 +223,7 @@ function AllTasks({ user, onTimerChange }) {
     const updatedDescription = e.target.description.value;
 
     try {
-      const res = await fetch(`http://localhost:5050/api/tasks/${taskToEdit._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/${taskToEdit._id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ title: updatedTitle, description: updatedDescription }),
