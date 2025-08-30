@@ -131,8 +131,8 @@ router.get("/day", protect, async (req, res) => {
     const logs = await Timelog.find({
       user: req.user.id,
       endTime: { $ne: null },
-      startTime: { $lte: endOfDay },   // The log must have started before the day ended
-      endTime:   { $gte: startOfDay }, 
+     // startTime: { $lte: endOfDay },   // The log must have started before the day ended
+     // endTime:   { $gte: startOfDay }, 
     })
       .populate("task", "title")
       .sort({ startTime: -1 });
