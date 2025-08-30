@@ -19,9 +19,11 @@ function LoginPage({ onLogin }) {
     }
 
     try {
+      const baseUrl = import.meta.env.VITE_API_URL; // Get the base URL
+
       const endpoint = isRegister
-        ? "http://localhost:5050/api/users/register"
-        : "http://localhost:5050/api/users/login";
+        ? `${baseUrl}/api/users/register` // Build the full URL
+        : `${baseUrl}/api/users/login`;
 
       const body = isRegister
         ? { name, email: username, password }

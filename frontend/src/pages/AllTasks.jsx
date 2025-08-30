@@ -135,7 +135,7 @@ function AllTasks({ user, onTimerChange }) {
       const timelog = activeTimers[taskId];
       if (!timelog) return setError("No active timer for this task");
   
-      const res = await fetch(`http://localhost:5050/api/timelog/stop/${timelog.logId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/timelog/stop/${timelog.logId}`, {
         method: "POST",
         headers,
       });

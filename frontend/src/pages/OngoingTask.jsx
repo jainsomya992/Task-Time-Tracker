@@ -39,7 +39,7 @@ function OngoingTasks({ user, refreshTrigger, onTimerChange }) {
   const fetchIncompleteTasks = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5050/api/tasks", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks`, {
         headers,
       });
       
@@ -62,7 +62,7 @@ function OngoingTasks({ user, refreshTrigger, onTimerChange }) {
   // Fetch active timelogs to see which tasks have active timers
   const fetchActiveTimelogs = async (incompleteTasks) => {
     try {
-      const res = await fetch("http://localhost:5050/api/timelog/active", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/timelog/active`, {
         headers,
       });
       
@@ -145,7 +145,7 @@ function OngoingTasks({ user, refreshTrigger, onTimerChange }) {
   // Start timer for a task
   const handleStart = async (taskId) => {
     try {
-      const res = await fetch(`http://localhost:5050/api/timelog/start/${taskId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/timelog/start/${taskId}`, {
         method: "POST",
         headers,
       });
@@ -186,7 +186,7 @@ function OngoingTasks({ user, refreshTrigger, onTimerChange }) {
         return;
       }
 
-      const res = await fetch(`http://localhost:5050/api/timelog/stop/${timelog.logId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/timelog/stop/${timelog.logId}`, {
         method: "POST",
         headers,
       });
@@ -246,7 +246,7 @@ function OngoingTasks({ user, refreshTrigger, onTimerChange }) {
         await handleStop(task._id);
       }
       
-      const res = await fetch(`http://localhost:5050/api/tasks/${task._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tasks/${task._id}`, {
         method: "PUT",
         headers,
         body: JSON.stringify({ status: "completed" }),

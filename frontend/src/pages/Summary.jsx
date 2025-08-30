@@ -91,10 +91,10 @@ function Summary({ user }) {
       const dateString = `${year}-${month}-${day}`;
 
       const [summaryRes, activityRes] = await Promise.all([
-        fetch(`http://localhost:5050/api/summary/today?date=${dateString}`, {
+        fetch(`${import.meta.env.VITE_API_URL}/api/summary/today?date=${dateString}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         }),
-        fetch(`http://localhost:5050/api/timelog/day?date=${dateString}`, {
+        fetch(`${import.meta.env.VITE_API_URL}/api/timelog/day?date=${dateString}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         }),
       ]);
