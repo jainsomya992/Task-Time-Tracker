@@ -10,7 +10,7 @@ import {
   FaBars,
   FaChartPie,
 } from "react-icons/fa";
-import "./Dashboard.css";
+import "./DashBoard.css";
 
 function DashboardLayout({ onLogout }) {
   const [isExpanded, setIsExpanded] = useState(true);
