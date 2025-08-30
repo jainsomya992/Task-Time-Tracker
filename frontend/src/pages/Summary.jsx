@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaRegClock, FaTasks, FaRegCheckCircle, FaChevronDown } from 'react-icons/fa';
+import { FaRegClock, FaTasks, FaRegCheckCircle, FaChevronDown, FaSync } from 'react-icons/fa';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -15,12 +15,29 @@ import {
 import { Doughnut, Line } from 'react-chartjs-2';
 import './Summary.css';
 
-// Chart.js Registration (no changes)
+// Chart.js Registration
 ChartJS.register(
   ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, Filler
 );
 
-// NEW: Reusable Expandable Stat Card Component
+// Time zone utility functions
+const convertToUTC = (date) => {
+  return new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
+};
+
+const convertToLocal = (date) => {
+  return new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+};
+
+const formatDateForAPI = (date) => {
+  const utcDate = convertToUTC(date);
+  const year = utcDate.getUTCFullYear();
+  const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(utcDate.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Reusable Expandable Stat Card Component
 function ExpandableStatCard({ icon, label, value, color, isExpanded, onToggle, details, detailType }) {
   const formatTime = (seconds) => {
     if (isNaN(seconds) || seconds < 0) return '0h 0m';
@@ -66,8 +83,9 @@ function Summary({ user }) {
   const [activityLogs, setActivityLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [timeZone, setTimeZone] = useState('');
 
-  // MODIFIED: State for date navigation and card expansion
+  // State for date navigation and card expansion
   const [currentDate, setCurrentDate] = useState(new Date());
   const [expandedCards, setExpandedCards] = useState({ workedOn: false, completed: false });
 
@@ -78,17 +96,19 @@ function Summary({ user }) {
     return `${h}h ${m}m`;
   };
 
-  // MODIFIED: fetchData is now wrapped in useCallback and accepts a date
+  // Fetch data with time zone handling
   const fetchData = useCallback(async (date) => {
     try {
       setLoading(true);
       setError('');
-      setSummaryData(null); // Clear previous data
+      setSummaryData(null);
 
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      // Use the time zone conversion function
+      const dateString = formatDateForAPI(date);
+      
+      // Detect time zone for debugging
+      const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      setTimeZone(detectedTimeZone);
 
       const [summaryRes, activityRes] = await Promise.all([
         fetch(`${import.meta.env.VITE_API_URL}/api/summary/today?date=${dateString}`, {
@@ -109,7 +129,7 @@ function Summary({ user }) {
       setSummaryData(summaryJson);
       setActivityLogs(activityJson);
 
-      // Doughnut chart logic (no changes)
+      // Doughnut chart logic
       if (summaryJson.taskBreakdown?.length > 0) {
         setDoughnutChartData({
           labels: summaryJson.taskBreakdown.map((task) => task.title),
@@ -119,7 +139,7 @@ function Summary({ user }) {
         setDoughnutChartData(null);
       }
 
-      // Line chart logic (no changes)
+      // Line chart logic
       if (summaryJson.hourlyBreakdown) {
         setLineChartData({
           labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
@@ -135,14 +155,12 @@ function Summary({ user }) {
     }
   }, [user.token]);
 
-  // MODIFIED: useEffect now calls the memoized fetchData with the current date
   useEffect(() => {
     if (user?.token) {
       fetchData(currentDate);
     }
   }, [user, currentDate, fetchData]);
   
-  // NEW: Handlers for date navigation and card toggling
   const handleDateChange = (days) => {
     setCurrentDate(prevDate => {
       const newDate = new Date(prevDate);
@@ -162,7 +180,7 @@ function Summary({ user }) {
            date.getFullYear() === today.getFullYear();
   };
 
-  // Chart options (no changes)
+  // Chart options
   const lineChartOptions = { maintainAspectRatio: false, responsive: true, scales: { y: { beginAtZero: true } } };
   const doughnutChartOptions = { maintainAspectRatio: false, responsive: true, plugins: { legend: { position: 'bottom' } } };
 
@@ -174,15 +192,19 @@ function Summary({ user }) {
       <div className="summary-header">
         <h2>Daily Summary</h2>
         <div className="date-navigator">
-          {/* MODIFIED: Buttons are now functional */}
           <button className="btn small" onClick={() => handleDateChange(-1)}>&lt; Prev</button>
           <span>{currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
           <button className="btn small" onClick={() => handleDateChange(1)} disabled={isToday(currentDate)}>Next &gt;</button>
+          <button className="btn small icon" onClick={() => fetchData(currentDate)} title="Refresh data">
+            <FaSync />
+          </button>
+        </div>
+        <div className="timezone-info">
+          Detected Time Zone: {timeZone}
         </div>
       </div>
 
       <div className="stats-grid">
-        {/* MODIFIED: Using the new ExpandableStatCard component */}
         <ExpandableStatCard
           icon={<FaRegClock />}
           label="Total Time Today"
@@ -247,7 +269,7 @@ function Summary({ user }) {
           <h3>Hourly Breakdown</h3>
           <div className="chart-container line-chart">
             {lineChartData ? <Line data={lineChartData} options={lineChartOptions} /> : <p>No hourly data to display.</p>}
-          </div>
+        </div>
         </div>
       </div>
     </div>

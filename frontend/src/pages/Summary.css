@@ -4,10 +4,9 @@
   max-width: 1200px;
   margin: 0 auto;
   background: #f9fafc;
- 
-  height: calc(100vh - 70px); /* adjust if header/footer different height */
+  height: calc(100vh - 70px);
   overflow-y: auto;
-  
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 /* Header */
@@ -215,28 +214,24 @@
   border-radius: 8px;
   border: 1px solid #ffa39e;
 }
-/* --- Add these styles to your existing Summary.css file --- */
 
-/* Makes the expandable cards clickable */
+/* Expandable cards */
 .stat-card.expandable {
   cursor: pointer;
   transition: all 0.3s ease;
-  flex-direction:column;
+  flex-direction: column;
 }
 
-/* Header within the stat card */
 .stat-card .stat-header {
   display: flex;
   align-items: center;
   width: 100%;
-  flex-direction: column;
 }
 
 .stat-card .stat-info {
-  flex-grow: 1; /* Allows info to take up space */
+  flex-grow: 1;
 }
 
-/* Chevron icon for expansion indicator */
 .expand-chevron {
   color: #ccc;
   transition: transform 0.3s ease;
@@ -248,7 +243,6 @@
   color: #888;
 }
 
-/* Container for the expanded details */
 .card-details {
   width: 100%;
   margin-top: 1rem;
@@ -290,10 +284,72 @@
   text-align: center;
 }
 
-
-/* Style for the disabled date navigator button */
 .date-navigator button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   background-color: #f5f5f5;
+}
+.timezone-info {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.btn.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+}
+
+.date-navigator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error-card {
+  text-align: center;
+  padding: 2rem;
+  background: #fff6f6;
+  border: 1px solid #e0b4b4;
+  border-radius: 8px;
+  color: #9f3a38;
+  margin: 2rem;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.timezone-selector {
+  margin-top: 10px;
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.timezone-section {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
 }
